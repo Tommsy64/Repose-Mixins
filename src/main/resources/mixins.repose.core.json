@@ -1,0 +1,18 @@
+{
+    "package": "com.tommsy.repose.mixin",
+    "refmap": "mixins.repose.refmap.json",
+    "required": true,
+    "target": "@env(DEFAULT)",
+    "compatibilityLevel": "JAVA_8",
+    "minVersion": "0.7.5",
+    "mixins": [
+        "MixinBlockStateImplementation",
+        "MixinBlock",
+        "MixinEntity",
+        "MixinEntityFallingBlock",
+        "accessor.ChunkAccessor"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

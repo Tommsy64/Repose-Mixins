@@ -1,0 +1,165 @@
+buildscript {
+    repositories {
+        maven { url 'http://files.minecraftforge.net/maven' }
+        maven { url 'https://plugins.gradle.org/m2/' }
+        maven {
+            name = 'sponge'
+            url = 'http://repo.spongepowered.org/maven'
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.23.0'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'com.diffplug.gradle.spotless'
+
+ext {
+    name = 'Repose Mixins'
+    modId = 'repose'
+}
+
+version = version_major + '.' + version_minor + '.' + version_patch + '.' + getBuildNumber()
+group = 'com.tommsy.' + project.ext.modId // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = project.ext.modId + '_' + mcversion
+
+sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+compileJava {
+    sourceCompatibility = targetCompatibility = '1.8'
+}
+compileJava.options.encoding = 'UTF-8'
+
+minecraft {
+    version = mcversion + '-' + forgeversion
+    runDir = 'run'
+    mappings = mcp_mappings
+    makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+    replace '@MOD_NAME@', project.ext.name
+    replace '@MOD_ID@', project.ext.modId
+    replace '@VERSION@', version
+    replace '@MCVERSION@', mcversion
+    replace '/* @MCVERSIONDEP@ */', ", acceptedMinecraftVersions = \"[${mcversion},${mcversion}+)\""
+
+    clientJvmArgs += ['-Dmixin.debug=true', '-Dfml.coreMods.load=com.tommsy.repose.dev.MixinBootstrap']
+    serverJvmArgs += ['-Dmixin.debug=true', '-Dfml.coreMods.load=com.tommsy.repose.dev.MixinBootstrap']
+}
+
+repositories {
+    maven {
+        name = 'SpongePowered Repo'
+        url = 'http://repo.spongepowered.org/maven/'
+    }
+    maven {
+        name = 'CurseForge'
+        url = 'https://minecraft.curseforge.com/api/maven/'
+    }
+}
+
+sourceSets {
+    main {
+        ext.refMap = 'mixins.repose.refmap.json'
+    }
+}
+
+configurations {
+    shade
+    compile.extendsFrom shade
+}
+
+dependencies {
+    shade('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
+        transitive = false
+    }
+    annotationProcessor 'org.spongepowered:mixin:0.7.11-SNAPSHOT'
+    runtime 'org.jetbrains.java.decompiler:fernflower:sponge-SNAPSHOT'
+
+    compileOnly 'org.projectlombok:lombok:1.18.10'
+    annotationProcessor 'org.projectlombok:lombok:1.18.10'
+}
+
+processResources {
+    // this will ensure that this task is redone when the versions change.
+    inputs.property 'mod_id', project.ext.modId
+    inputs.property 'name', project.ext.name
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', project.minecraft.version
+
+    // replace stuff in mcmod.info, nothing else
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'mod_id':project.ext.modId, 'name':project.ext.name, 'version':project.version, 'mcversion':project.minecraft.version
+    }
+
+    // copy everything else, thats not the mcmod.info
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+                'Built-By': System.properties['user.name'],
+                'Created-By': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')',
+                'Implementation-Title': project.name,
+                'Implementation-Version': version,
+                // 'FMLCorePluginContainsFMLMod': 'true',
+                'ForceLoadAsMod': 'true',
+                'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
+                'TweakOrder': 0,
+                'MixinConfigs': [
+                        'mixins.repose.core.json'
+                ].join(','),
+                'FMLAT': 'repose_at.cfg'
+        )
+    }
+
+    from sourceSets.main.output
+
+    configurations.shade.each { dep ->
+        from(project.zipTree(dep)) {
+            rename 'LICENSE.txt', 'org/spongepowered/LICENSE.txt'
+
+            exclude 'META-INF/*.SF'
+            exclude 'META-INF/*.RSA'
+            exclude 'META-INF/*.MF'
+
+            exclude '**/*.html'
+        }
+    }
+
+
+    rename '(.+_at.cfg)', 'META-INF/$1'
+}
+
+spotless {
+    java {
+        licenseHeaderFile 'spotless/license-header.txt'
+        // An import ordering file, exported from Eclipse
+        importOrderFile 'spotless/forge.importorder'
+        removeUnusedImports()
+        // XML file dumped out by the Eclipse formatter
+        eclipse().configFile('spotless/forge-format.xml')
+        trimTrailingWhitespace()
+    }
+    format 'misc', {
+        target '**/*.xml', '**/.gitignore', '*.properties', '*.gradle'
+        indentWithSpaces()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    lineEndings 'PLATFORM_NATIVE'
+}
+task format(dependsOn: 'spotlessApply', group: 'spotless')
+
+def getBuildNumber() {
+    return "$System.env.BUILD_NUMBER" != 'null' ? "$System.env.BUILD_NUMBER" : '0'
+}
+
+runServer {
+    args 'nogui'
+}

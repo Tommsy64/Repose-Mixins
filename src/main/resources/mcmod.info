@@ -1,0 +1,18 @@
+[
+{
+  "modid": "${mod_id}",
+  "name": "${name}",
+  "description": "Sloping and more realistic sand/dirt.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Tommsy64"],
+  "credits": "delvr",
+  "logoFile": "",
+  "screenshots": [],
+  "requiredMods": [],
+  "dependencies": [],
+  "useDependencyInformation": "true"
+}
+]
