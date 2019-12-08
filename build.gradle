@@ -107,7 +107,7 @@ jar {
                 'Created-By': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')',
                 'Implementation-Title': project.name,
                 'Implementation-Version': version,
-                // 'FMLCorePluginContainsFMLMod': 'true',
+                'FMLCorePluginContainsFMLMod': 'true',
                 'ForceLoadAsMod': 'true',
                 'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
                 'TweakOrder': 0,

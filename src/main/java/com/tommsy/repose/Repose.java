@@ -1,5 +1,5 @@
 /*
- * Sponge-Compatible Repose using Mixins
+ * Makes sand behave more realistically and allows walking up 1 block steps.
  * Copyright (C) 2019  Thomas Pakh
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -120,8 +120,8 @@ public class Repose {
             return proxy.granularBlocks.contains(state.getBlock());
         case 2:
             return proxy.naturalStoneBlocks.contains(state.getBlock());
-        // case 3:
-        // return reposeGranularBlocks.contains(state) && reposeNaturalStoneBlocks.contains(state);
+        case 3:
+            return proxy.granularBlocks.contains(state.getBlock()) && proxy.naturalStoneBlocks.contains(state.getBlock());
         }
         return false;
     }

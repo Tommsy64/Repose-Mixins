@@ -1,5 +1,5 @@
 /*
- * Sponge-Compatible Repose using Mixins
+ * Makes sand behave more realistically and allows walking up 1 block steps.
  * Copyright (C) 2019  Thomas Pakh
  *
  * This program is free software: you can redistribute it and/or modify it
