@@ -131,9 +131,6 @@ jar {
             exclude '**/*.html'
         }
     }
-
-
-    rename '(.+_at.cfg)', 'META-INF/$1'
 }
 
 spotless {
