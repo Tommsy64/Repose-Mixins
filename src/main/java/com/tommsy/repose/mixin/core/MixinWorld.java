@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see LICENSE.md at the root of the project.
  */
-package com.tommsy.repose.mixin;
+package com.tommsy.repose.mixin.core;
 
 import java.util.Random;
 
@@ -35,7 +35,7 @@ import net.minecraft.world.World;
 public class MixinWorld {
 
     @Redirect(method = "immediateBlockTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;updateTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V"))
-    public void immediateBlockTick(Block block, World this$, BlockPos pos, IBlockState state_, Random random) {
+    private void immediateBlockTick(Block block, World this$, BlockPos pos, IBlockState state_, Random random) {
         redirectUpdateTick(block, this$, pos, state_, random);
     }
 

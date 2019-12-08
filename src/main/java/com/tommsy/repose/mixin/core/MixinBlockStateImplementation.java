@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see LICENSE.md at the root of the project.
  */
-package com.tommsy.repose.mixin;
+package com.tommsy.repose.mixin.core;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.tommsy.repose.IBlockStateRepose;
 import com.tommsy.repose.Repose;
 import com.tommsy.repose.config.ReposeConfig;
-import com.tommsy.repose.mixin.accessor.ChunkAccessor;
+import com.tommsy.repose.mixin.core.accessor.ChunkAccessor;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.BlockStateContainer;
@@ -55,7 +55,7 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     private Block block;
 
     @Inject(method = "addCollisionBoxToList", at = @At(value = "HEAD"), cancellable = true)
-    public void addCollisionBoxToList(World world, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entity, boolean isActualState,
+    private void addCollisionBoxToList(World world, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entity, boolean isActualState,
             CallbackInfo ci) {
         AxisAlignedBB collisionBB = getCollisionBoundingBox(world, pos);
         // Optimization
@@ -106,7 +106,7 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     }
 
     @Inject(method = "getCollisionBoundingBox", at = @At(value = "TAIL"), cancellable = true)
-    public void getCollisionBoundingBox(CallbackInfoReturnable<AxisAlignedBB> ci) {
+    private void getCollisionBoundingBox(CallbackInfoReturnable<AxisAlignedBB> ci) {
         AxisAlignedBB bb = ci.getReturnValue();
         // Minecraft's snow_layer with data 0 makes a 0-thickness box that still blocks sideways movement
         if (bb == null || bb.maxY == 0)
@@ -114,7 +114,7 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     }
 
     @Inject(method = "neighborChanged", at = @At(value = "HEAD"), cancellable = true)
-    public void neighborChanged(World world, BlockPos pos, Block formerNeighbor, BlockPos neighborPos, CallbackInfo ci) {
+    private void neighborChanged(World world, BlockPos pos, Block formerNeighbor, BlockPos neighborPos, CallbackInfo ci) {
         if (canFallFrom(pos, world)) {
             world.scheduleUpdate(pos, this.getBlock(), Repose.BLOCK_FALL_DELAY);
             ci.cancel();
@@ -137,12 +137,11 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     }
 
     @Unique
-    public boolean canFall(World world) {
+    private boolean canFall(World world) {
         return ChunkAccessor.getPopulating() == null && !world.isRemote && ReposeConfig.granularBlocksFall && Repose.proxy.granularBlocks.contains(this.block);
     }
 
     @Override
-    @Unique
     public boolean hasSolidTop(BlockPos pos, World world) {
         AxisAlignedBB topBox = new AxisAlignedBB(0, 0.99, 0, 1, 1, 1).offset(pos);
         ArrayList<AxisAlignedBB> intersectingBoxes = new ArrayList<>(1);
@@ -151,7 +150,6 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     }
 
     @Override
-    @Unique
     public boolean canFallFrom(BlockPos pos, World world) {
         return canFall(world) && world.isBlockLoaded(pos.down()) && canFallThrough(pos.down(), world);
     }
@@ -170,7 +168,6 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     }
 
     @Override
-    @Unique
     public boolean canSpreadFrom(BlockPos pos, World world) {
         return canSpread(world) && world.isBlockLoaded(pos) && !canFallThrough(pos.down(), world);
     }
@@ -181,7 +178,6 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     }
 
     @Override
-    @Unique
     public void spreadFrom(BlockPos startPos, World world) {
         // TODO: Move this out of IBlockState impl...
 
@@ -209,7 +205,6 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     }
 
     @Override
-    @Unique
     public void fallFrom(BlockPos pos, BlockPos posOrigin, World world) {
         IBlockState origState = world.getBlockState(posOrigin);
         Block origBlock = origState.getBlock();
@@ -246,7 +241,6 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     }
 
     @Override
-    @Unique
     public boolean canSpreadInAvalanche(World world) {
         return ReposeConfig.avalanches && canSpread(world) && !Repose.isSoil(block);
     }

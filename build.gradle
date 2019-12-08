@@ -112,7 +112,8 @@ jar {
                 'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
                 'TweakOrder': 0,
                 'MixinConfigs': [
-                        'mixins.repose.core.json'
+                        'mixins.repose.core.json',
+                        'mixins.repose.sponge.json'
                 ].join(','),
                 'FMLAT': 'repose_at.cfg'
         )

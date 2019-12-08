@@ -1,0 +1,14 @@
+{
+    "package": "com.tommsy.repose.mixin.sponge",
+    "refmap": "mixins.repose.refmap.json",
+    "plugin": "com.tommsy.repose.mixin.sponge.SpongeMixinPlugin",
+    "required": false,
+    "target": "@env(DEFAULT)",
+    "compatibilityLevel": "JAVA_8",
+    "minVersion": "0.7.11",
+    "priority": 1010,
+    "mixinPriority": 1010,
+    "mixins": [
+        "MixinBlock"
+    ]
+}

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see LICENSE.md at the root of the project.
  */
-package com.tommsy.repose.mixin;
+package com.tommsy.repose.mixin.core;
 
 import javax.annotation.Nullable;
 
@@ -56,17 +56,22 @@ public abstract class MixinEntityFallingBlock extends MixinEntity {
     private BlockPos prevBlockPos;
 
     @Inject(method = "onUpdate", at = @At(value = "HEAD"))
-    public void setPrevBlockPos(CallbackInfo ci) {
+    private void setPrevBlockPos(CallbackInfo ci) {
         prevBlockPos = new BlockPos(this.prevPosX, this.prevPosY, this.prevPosZ);
     }
 
     @Redirect(method = "onUpdate", slice = @Slice(from = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/entity/item/EntityFallingBlock;fallTime:I", ordinal = 0)), at = @At(value = "NEW", target = "Lnet/minecraft/util/math/BlockPos;", ordinal = 0), allow = 1)
-    public BlockPos useOriginBlockPos(Entity this$) {
+    private BlockPos useOriginBlockPos(Entity this$) {
         return prevBlockPos;
     }
 
+    @Redirect(method = "onUpdate", slice = @Slice(from = @At(value = "NEW", target = "Lnet/minecraft/util/math/BlockPos;", ordinal = 0), to = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockToAir(Lnet/minecraft/util/math/BlockPos;)Z", ordinal = 0)), at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;", ordinal = 0), allow = 1)
+    private IBlockState ignoredBlockComparrisonCheck(World world, BlockPos pos) {
+        return this.fallTile;
+    }
+
     @Redirect(method = "onUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockToAir(Lnet/minecraft/util/math/BlockPos;)Z"), allow = 1)
-    public boolean onFallingStart(World world, BlockPos posOrigin) {
+    private boolean onFallingStart(World world, BlockPos posOrigin) {
         boolean flag = world.setBlockToAir(posOrigin);
         if (!world.isRemote && ((IBlockStateRepose) fallTile).canSpreadInAvalanche(world))
             Repose.triggerNeighborSpread(posOrigin.up(), world);
@@ -77,7 +82,7 @@ public abstract class MixinEntityFallingBlock extends MixinEntity {
      * Returning false to drop item.
      */
     @Redirect(method = "onUpdate", slice = @Slice(from = @At(value = "INVOKE:LAST", target = "Lnet/minecraft/entity/item/EntityFallingBlock;setDead()V")), at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;mayPlace(Lnet/minecraft/block/Block;Lnet/minecraft/util/math/BlockPos;ZLnet/minecraft/util/EnumFacing;Lnet/minecraft/entity/Entity;)Z"), allow = 1)
-    public boolean shouldDropItem(World world, Block block, BlockPos pos, boolean skipCollisionCheck, EnumFacing sidePlacedOn, @Nullable Entity placer) {
+    private boolean shouldDropItem(World world, Block block, BlockPos pos, boolean skipCollisionCheck, EnumFacing sidePlacedOn, @Nullable Entity placer) {
         IBlockStateRepose state = (IBlockStateRepose) this.world.getBlockState(pos);
         return !Repose.shouldDropAsItem(state, pos, world)
                 && world.mayPlace(block, pos, skipCollisionCheck, sidePlacedOn, placer); // Default call
@@ -91,7 +96,7 @@ public abstract class MixinEntityFallingBlock extends MixinEntity {
      * @return
      */
     @Redirect(method = "onUpdate", slice = @Slice(from = @At(value = "INVOKE:LAST", target = "Lnet/minecraft/entity/item/EntityFallingBlock;setDead()V")), at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/entity/item/EntityFallingBlock;tileEntityData:Lnet/minecraft/nbt/NBTTagCompound;", ordinal = 0), allow = 1)
-    public NBTTagCompound disableTileEntityIfStatement(EntityFallingBlock this$) {
+    private NBTTagCompound disableTileEntityIfStatement(EntityFallingBlock this$) {
         if (tileEntityData != null && fallTile.getBlock().hasTileEntity(fallTile))
             Repose.copyTileEntityTags(new BlockPos(this$), tileEntityData, this.world); // Matches default behavior
 

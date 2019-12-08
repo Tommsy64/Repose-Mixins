@@ -22,7 +22,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 /**
- * Mixed into the IBlockState implementation. This allows outside callers to the mixed-in methods in {@linkplain com.tommsy.repose.mixin.MixinBlockStateImplementation
+ * Mixed into the IBlockState implementation. This allows outside callers to the mixed-in methods in {@linkplain com.tommsy.repose.mixin.core.MixinBlockStateImplementation
  * MixinBlockStateImplementation}.
  */
 public interface IBlockStateRepose extends IBlockState {

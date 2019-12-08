@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see LICENSE.md at the root of the project.
  */
-package com.tommsy.repose.mixin.accessor;
+package com.tommsy.repose.mixin.core.accessor;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;

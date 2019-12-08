@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see LICENSE.md at the root of the project.
  */
-package com.tommsy.repose.mixin;
+package com.tommsy.repose.mixin.core;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,7 +34,6 @@ import net.minecraft.world.World;
 
 @Mixin(Block.class)
 public class MixinBlock {
-
     @Inject(method = "onBlockAdded", at = @At(value = "HEAD"), cancellable = true)
     public void onBlockAdded(World world, BlockPos pos, IBlockState state, CallbackInfo ci) {
         if (((IBlockStateRepose) state).canFallFrom(pos, world)) {

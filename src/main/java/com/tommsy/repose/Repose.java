@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.Logger;
 
 import com.tommsy.repose.config.ReposeConfig;
-import com.tommsy.repose.mixin.accessor.ChunkAccessor;
+import com.tommsy.repose.mixin.core.accessor.ChunkAccessor;
 import com.tommsy.repose.proxy.ClientProxy;
 import com.tommsy.repose.proxy.CommonProxy;
 
