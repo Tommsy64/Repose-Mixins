@@ -17,8 +17,6 @@
  */
 package com.tommsy.repose.mixin;
 
-import java.util.Random;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -51,16 +49,6 @@ public class MixinBlock {
         IBlockStateRepose state = (IBlockStateRepose) state_;
         if (state.canSpreadFrom(pos, world)) {
             state.spreadFrom(pos, world);
-            ci.cancel();
-        }
-        // Else, default implementation
-    }
-
-    @Inject(method = "updateTick", at = @At(value = "HEAD"), cancellable = true)
-    public void updateTick(World world, BlockPos pos, IBlockState state_, Random rand, CallbackInfo ci) {
-        IBlockStateRepose state = (IBlockStateRepose) state_;
-        if (state.canFallFrom(pos, world)) {
-            state.fallFrom(pos, pos, world);
             ci.cancel();
         }
         // Else, default implementation

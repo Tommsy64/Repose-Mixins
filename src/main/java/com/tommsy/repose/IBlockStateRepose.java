@@ -39,6 +39,4 @@ public interface IBlockStateRepose extends IBlockState {
     public void fallFrom(BlockPos pos, BlockPos posOrigin, World world);
 
     public boolean hasSolidTop(BlockPos pos, World world);
-
-    public boolean canDisplace(IBlockState blockState);
 }

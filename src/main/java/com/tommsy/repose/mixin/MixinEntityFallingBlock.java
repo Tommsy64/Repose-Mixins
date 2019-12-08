@@ -17,9 +17,17 @@
  */
 package com.tommsy.repose.mixin;
 
+import javax.annotation.Nullable;
+
+import org.spongepowered.asm.lib.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Slice;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.tommsy.repose.IBlockStateRepose;
 import com.tommsy.repose.Repose;
@@ -27,11 +35,13 @@ import com.tommsy.repose.Repose;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.MoverType;
 import net.minecraft.entity.item.EntityFallingBlock;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
 
 @Mixin(EntityFallingBlock.class)
 public abstract class MixinEntityFallingBlock extends MixinEntity {
@@ -40,51 +50,68 @@ public abstract class MixinEntityFallingBlock extends MixinEntity {
     private IBlockState fallTile;
 
     @Shadow
-    public int fallTime;
+    public NBTTagCompound tileEntityData;
 
-    // @Inject(method = "onUpdate", at = @At(value = "HEAD"), cancellable = true)
-    @Overwrite
-    public void onUpdate() {
-        Block block = fallTile.getBlock();
-        fallTime++;
+    @Unique
+    private BlockPos prevBlockPos;
 
-        if (fallTime >= 1000 && !world.isRemote) {
-            this.setDead();
-            block.dropBlockAsItem(world, new BlockPos(MathHelper.floor(posX), MathHelper.floor(posY), MathHelper.floor(posZ)), fallTile, 0);
-        }
-
-        BlockPos posOrigin = new BlockPos(prevPosX, prevPosY, prevPosZ);
-
-        prevPosX = posX;
-        prevPosY = posY;
-        prevPosZ = posZ;
-
-        motionY -= 0.04D;
-
-        this.move(MoverType.SELF, 0, motionY, 0);
-
-        if (!world.isRemote) {
-            IBlockStateRepose state = (IBlockStateRepose) fallTile;
-
-            if (fallTime == 1) {
-                world.setBlockToAir(posOrigin);
-                if (state.canSpreadInAvalanche(world))
-                    Repose.triggerNeighborSpread(posOrigin.up(), world);
-            }
-
-            if (state.canSpreadInAvalanche(world) && !Repose.isServerDelayed(world)) {
-                AxisAlignedBB box = this.getEntityBoundingBox();
-
-                int yTopCurrent = MathHelper.floor(box.maxY);
-                int yTopPrevious = MathHelper.floor(box.maxY - motionY);
-
-                if (yTopCurrent < yTopPrevious)
-                    Repose.triggerNeighborSpread(new BlockPos(MathHelper.floor(posX), yTopPrevious, MathHelper.floor(posZ)), world);
-            }
-            if (this.onGround) {
-                this.setDead();
-                Repose.onLanding(state, new BlockPos((Entity) (Object) this), fallTile, this.getEntityData(), world);
-            }
-        }
+    @Inject(method = "onUpdate", at = @At(value = "HEAD"))
+    public void setPrevBlockPos(CallbackInfo ci) {
+        prevBlockPos = new BlockPos(this.prevPosX, this.prevPosY, this.prevPosZ);
     }
+
+    @Redirect(method = "onUpdate", slice = @Slice(from = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/entity/item/EntityFallingBlock;fallTime:I", ordinal = 0)), at = @At(value = "NEW", target = "Lnet/minecraft/util/math/BlockPos;", ordinal = 0), allow = 1)
+    public BlockPos useOriginBlockPos(Entity this$) {
+        return prevBlockPos;
+    }
+
+    @Redirect(method = "onUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockToAir(Lnet/minecraft/util/math/BlockPos;)Z"), allow = 1)
+    public boolean onFallingStart(World world, BlockPos posOrigin) {
+        boolean flag = world.setBlockToAir(posOrigin);
+        if (!world.isRemote && ((IBlockStateRepose) fallTile).canSpreadInAvalanche(world))
+            Repose.triggerNeighborSpread(posOrigin.up(), world);
+        return flag;
+    }
+
+    /**
+     * Returning false to drop item.
+     */
+    @Redirect(method = "onUpdate", slice = @Slice(from = @At(value = "INVOKE:LAST", target = "Lnet/minecraft/entity/item/EntityFallingBlock;setDead()V")), at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;mayPlace(Lnet/minecraft/block/Block;Lnet/minecraft/util/math/BlockPos;ZLnet/minecraft/util/EnumFacing;Lnet/minecraft/entity/Entity;)Z"), allow = 1)
+    public boolean shouldDropItem(World world, Block block, BlockPos pos, boolean skipCollisionCheck, EnumFacing sidePlacedOn, @Nullable Entity placer) {
+        IBlockStateRepose state = (IBlockStateRepose) this.world.getBlockState(pos);
+        return !Repose.shouldDropAsItem(state, pos, world)
+                && world.mayPlace(block, pos, skipCollisionCheck, sidePlacedOn, placer); // Default call
+    }
+
+    /**
+     * We need to inject after the if statement handling the TileEntity, however there is no method there to use as an injection point. Therefore, disable that if statement and reimplement
+     * it.
+     *
+     * @param this$
+     * @return
+     */
+    @Redirect(method = "onUpdate", slice = @Slice(from = @At(value = "INVOKE:LAST", target = "Lnet/minecraft/entity/item/EntityFallingBlock;setDead()V")), at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/entity/item/EntityFallingBlock;tileEntityData:Lnet/minecraft/nbt/NBTTagCompound;", ordinal = 0), allow = 1)
+    public NBTTagCompound disableTileEntityIfStatement(EntityFallingBlock this$) {
+        if (tileEntityData != null && fallTile.getBlock().hasTileEntity(fallTile))
+            Repose.copyTileEntityTags(new BlockPos(this$), tileEntityData, this.world); // Matches default behavior
+
+        IBlockStateRepose reposeState = (IBlockStateRepose) fallTile;
+        if (reposeState.canSpreadInAvalanche(world) && !Repose.isServerDelayed(world)) {
+            AxisAlignedBB box = this.getEntityBoundingBox();
+
+            int yTopCurrent = MathHelper.floor(box.maxY);
+            int yTopPrevious = MathHelper.floor(box.maxY - motionY);
+
+            if (yTopCurrent < yTopPrevious)
+                Repose.triggerNeighborSpread(new BlockPos(MathHelper.floor(posX), yTopPrevious, MathHelper.floor(posZ)), world);
+        }
+
+        BlockPos pos = new BlockPos(this$);
+        if (!Repose.isServerDelayed(world) && reposeState.canSpreadFrom(pos, world))
+            reposeState.spreadFrom(pos, world);
+
+        prevBlockPos = null;
+        return null;
+    }
+
 }

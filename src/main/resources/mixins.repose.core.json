@@ -10,6 +10,8 @@
         "MixinBlock",
         "MixinEntity",
         "MixinEntityFallingBlock",
+        "MixinWorld",
+        "MixinWorldServer",
         "accessor.ChunkAccessor"
     ],
     "injectors": {

@@ -67,6 +67,7 @@ public class CommonProxy {
 
         Repose.getLogger().info(granularBlocks.stream().map(b -> b.getRegistryName().toString()).collect(Collectors.joining(", ", "Granular Blocks: [", "]")));
         Repose.getLogger().info(soilBlocks.stream().map(b -> b.getRegistryName().toString()).collect(Collectors.joining(", ", "Soil Blocks: [", "]")));
+        Repose.getLogger().info(sedimentaryBlocks.stream().map(b -> b.getRegistryName().toString()).collect(Collectors.joining(", ", "Sedimentary Blocks: [", "]")));
     }
 
     private boolean isHarvestedBy(Block block, String tool) {

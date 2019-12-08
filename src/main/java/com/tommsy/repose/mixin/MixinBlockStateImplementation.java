@@ -143,12 +143,6 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
 
     @Override
     @Unique
-    public boolean canDisplace(IBlockState state) {
-        return !state.getMaterial().blocksMovement();
-    }
-
-    @Override
-    @Unique
     public boolean hasSolidTop(BlockPos pos, World world) {
         AxisAlignedBB topBox = new AxisAlignedBB(0, 0.99, 0, 1, 1, 1).offset(pos);
         ArrayList<AxisAlignedBB> intersectingBoxes = new ArrayList<>(1);
@@ -166,8 +160,8 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     private boolean canFallThrough(BlockPos pos, World world) {
         IBlockState state = world.getBlockState(pos);
         if (ReposeConfig.breakOnPartialBlocks)
-            return canDisplace(state) || !hasSolidTop(pos, world);
-        return canDisplace(state) && !hasSolidTop(pos, world);
+            return Repose.canDisplace(state) || !hasSolidTop(pos, world);
+        return Repose.canDisplace(state) && !hasSolidTop(pos, world);
     }
 
     @Unique
@@ -183,7 +177,7 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
 
     @Unique
     private boolean canSpreadThrough(BlockPos pos, World world) {
-        return canDisplace(world.getBlockState(pos)) && canFallThrough(pos.down(), world) && !Repose.isOccupiedByFallingBlock(pos, world);
+        return Repose.canDisplace(world.getBlockState(pos)) && canFallThrough(pos.down(), world) && !Repose.isOccupiedByFallingBlock(pos, world);
     }
 
     @Override
@@ -210,10 +204,8 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
                 spreadablePositions[spreadablePosCount++] = pos;
         }
 
-        Repose.getLogger().info("spreadablePosCount: " + spreadablePosCount);
-
         if (spreadablePosCount > 0)
-            fallFrom(spreadablePositions[world.rand.nextInt(spreadablePosCount + 1)], startPos, world);
+            fallFrom(spreadablePositions[world.rand.nextInt(spreadablePosCount)], startPos, world);
     }
 
     @Override
@@ -222,11 +214,9 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
         IBlockState origState = world.getBlockState(posOrigin);
         Block origBlock = origState.getBlock();
 
-        // Harcode?
+        // Hardcode?
         IBlockState state = origBlock == Blocks.GRASS || origBlock == Blocks.GRASS_PATH || origBlock == Blocks.FARMLAND ? Blocks.DIRT.getDefaultState() : origState;
         IBlockStateRepose stateRepose = (IBlockStateRepose) state;
-
-        Repose.getLogger().info("Server Delayed: {} Instant: {} OriginPos: {} Pos: {}", Repose.isServerDelayed(world), Repose.blocksFallInstantlyAt(pos, world), posOrigin, pos);
 
         // Nullable
         TileEntity tileEntity = world.getTileEntity(posOrigin);

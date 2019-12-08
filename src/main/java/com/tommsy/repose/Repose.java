@@ -131,7 +131,7 @@ public class Repose {
     }
 
     public static boolean blocksFallInstantlyAt(BlockPos pos, World world) {
-        return BlockFalling.fallInstantly || world.isAreaLoaded(pos.add(-32, -32, -32), pos.add(32, 32, 32));
+        return BlockFalling.fallInstantly || !world.isAreaLoaded(pos.add(-32, -32, -32), pos.add(32, 32, 32));
     }
 
     public static boolean isServerDelayed(World world) {
@@ -173,18 +173,26 @@ public class Repose {
         return false;
     }
 
+    public static boolean canDisplace(IBlockState state) {
+        return !state.getMaterial().blocksMovement();
+    }
+
+    public static boolean shouldDropAsItem(IBlockState state, BlockPos pos, World world) {
+        return ReposeConfig.breakOnPartialBlocks &&
+                (!Repose.canDisplace(state) || // ex.: landing on a slab
+                        Repose.canDisplace(world.getBlockState(pos.down())) || // ex.: landing on a ladder
+                        ((IBlockStateRepose) state).hasSolidTop(pos, world)); // ex. landing IN a ladder (falling instantly)
+    }
+
+    /**
+     * Used when doing instant-fall.
+     */
     public static void onLanding(IBlockStateRepose reposeState, BlockPos collisionPos, IBlockState state, @Nullable NBTTagCompound entityTags, World world) {
         Block block = state.getBlock();
-        BlockPos pos = ReposeConfig.breakOnPartialBlocks || reposeState.canDisplace(world.getBlockState(collisionPos)) ? collisionPos : collisionPos.up();
+        BlockPos pos = ReposeConfig.breakOnPartialBlocks || Repose.canDisplace(world.getBlockState(collisionPos)) ? collisionPos : collisionPos.up();
         IBlockState stateHere = world.getBlockState(pos);
 
-        Repose.getLogger().info("Can Displace: {} Can Displace Below: {} HasSolidTop: {}", reposeState.canDisplace(stateHere), reposeState.canDisplace(world.getBlockState(pos
-                .down())), reposeState.hasSolidTop(pos, world));
-
-        if (ReposeConfig.breakOnPartialBlocks &&
-                (!reposeState.canDisplace(stateHere) || // ex.: landing on a slab
-                        reposeState.canDisplace(world.getBlockState(pos.down())) || // ex.: landing on a ladder
-                        reposeState.hasSolidTop(pos, world))) { // ex. landing IN a ladder (falling instantly)
+        if (shouldDropAsItem(stateHere, pos, world)) {
             block.dropBlockAsItem(world, pos, state, 0);
         } else {
             if (!world.isAirBlock(pos))
@@ -196,7 +204,7 @@ public class Repose {
                 blockFalling.onEndFalling(world, pos, state, stateHere);
             }
 
-            if (entityTags != null)
+            if (entityTags != null && block.hasTileEntity(state))
                 copyTileEntityTags(pos, entityTags, world);
 
             if (!Repose.isServerDelayed(world) && reposeState.canSpreadFrom(pos, world))
@@ -207,7 +215,7 @@ public class Repose {
         world.playSound(null, pos, sound.getBreakSound(), SoundCategory.BLOCKS, sound.getVolume(), sound.getPitch());
     }
 
-    private static void copyTileEntityTags(BlockPos pos, NBTTagCompound tagCompound, World world) {
+    public static void copyTileEntityTags(BlockPos pos, NBTTagCompound tagCompound, World world) {
         TileEntity tileEntity = world.getTileEntity(pos);
         if (tileEntity != null) {
             NBTTagCompound newTagCompound = new NBTTagCompound();
