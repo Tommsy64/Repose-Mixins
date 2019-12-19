@@ -121,7 +121,7 @@ public class Repose {
         case 2:
             return proxy.naturalStoneBlocks.contains(state.getBlock());
         case 3:
-            return proxy.granularBlocks.contains(state.getBlock()) && proxy.naturalStoneBlocks.contains(state.getBlock());
+            return proxy.granularBlocks.contains(state.getBlock()) || proxy.naturalStoneBlocks.contains(state.getBlock());
         }
         return false;
     }

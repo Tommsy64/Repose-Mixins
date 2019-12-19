@@ -24,8 +24,10 @@ import lombok.NoArgsConstructor;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.Comment;
 import net.minecraftforge.common.config.Config.RangeInt;
+import net.minecraftforge.common.config.Config.RequiresMcRestart;
 
 @Config(modid = Repose.MOD_ID)
+@RequiresMcRestart
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ReposeConfig {
     @Comment("Whether or not sneaking players can go up and down slopes.")

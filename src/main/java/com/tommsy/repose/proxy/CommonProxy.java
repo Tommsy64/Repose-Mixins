@@ -55,7 +55,7 @@ public class CommonProxy {
             }
         });
 
-        Stream.of(OreDictionary.getOreNames()).filter(s -> s.startsWith("ore") || s.equals("stone") || s.equals("sandstone"))
+        Stream.of(OreDictionary.getOreNames()).filter(s -> s.startsWith("ore") || s.equals("cobblestone") || s.equals("stone") || s.equals("sandstone"))
                 .map(name -> OreDictionary.getOres(name, false))
                 .flatMap(l -> l.stream()).map(i -> Block.getBlockFromItem(i.getItem()))
                 .collect(Collectors.toCollection(() -> naturalStoneBlocks));
@@ -65,9 +65,14 @@ public class CommonProxy {
         naturalStoneBlocks.add(Blocks.NETHERRACK);
         naturalStoneBlocks.add(Blocks.END_STONE);
 
-        Repose.getLogger().info(granularBlocks.stream().map(b -> b.getRegistryName().toString()).collect(Collectors.joining(", ", "Granular Blocks: [", "]")));
-        Repose.getLogger().info(soilBlocks.stream().map(b -> b.getRegistryName().toString()).collect(Collectors.joining(", ", "Soil Blocks: [", "]")));
-        Repose.getLogger().info(sedimentaryBlocks.stream().map(b -> b.getRegistryName().toString()).collect(Collectors.joining(", ", "Sedimentary Blocks: [", "]")));
+        printBlockSet(granularBlocks, "Granular Blocks");
+        printBlockSet(soilBlocks, "Soil Blocks");
+        printBlockSet(sedimentaryBlocks, "Sedimentary Blocks");
+        printBlockSet(naturalStoneBlocks, "Natural Stone Blocks");
+    }
+
+    private static void printBlockSet(Set<Block> set, final String name) {
+        Repose.getLogger().info(set.stream().map(b -> b.getRegistryName().toString()).collect(Collectors.joining(", ", name + ": [", "]")));
     }
 
     private boolean isHarvestedBy(Block block, String tool) {
