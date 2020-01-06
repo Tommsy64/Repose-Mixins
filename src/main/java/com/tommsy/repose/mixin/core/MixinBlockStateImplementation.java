@@ -17,7 +17,6 @@
  */
 package com.tommsy.repose.mixin.core;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -142,14 +141,6 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     }
 
     @Override
-    public boolean hasSolidTop(BlockPos pos, World world) {
-        AxisAlignedBB topBox = new AxisAlignedBB(0, 0.99, 0, 1, 1, 1).offset(pos);
-        ArrayList<AxisAlignedBB> intersectingBoxes = new ArrayList<>(1);
-        addCollisionBoxToList(world, pos, topBox, intersectingBoxes, null, false);
-        return !intersectingBoxes.isEmpty();
-    }
-
-    @Override
     public boolean canFallFrom(BlockPos pos, World world) {
         return canFall(world) && world.isBlockLoaded(pos.down()) && canFallThrough(pos.down(), world);
     }
@@ -158,8 +149,8 @@ public abstract class MixinBlockStateImplementation implements IBlockState, IBlo
     private boolean canFallThrough(BlockPos pos, World world) {
         IBlockState state = world.getBlockState(pos);
         if (ReposeConfig.breakOnPartialBlocks)
-            return Repose.canDisplace(state) || !hasSolidTop(pos, world);
-        return Repose.canDisplace(state) && !hasSolidTop(pos, world);
+            return Repose.canDisplace(state) || !Repose.hasSolidTop(state, pos, world);
+        return Repose.canDisplace(state) && !Repose.hasSolidTop(state, pos, world);
     }
 
     @Unique

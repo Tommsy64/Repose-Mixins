@@ -37,6 +37,4 @@ public interface IBlockStateRepose extends IBlockState {
     public boolean canSpreadInAvalanche(World world);
 
     public void fallFrom(BlockPos pos, BlockPos posOrigin, World world);
-
-    public boolean hasSolidTop(BlockPos pos, World world);
 }

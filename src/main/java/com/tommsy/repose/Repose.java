@@ -17,6 +17,8 @@
  */
 package com.tommsy.repose;
 
+import java.util.ArrayList;
+
 import javax.annotation.Nullable;
 
 import org.apache.logging.log4j.Logger;
@@ -181,7 +183,7 @@ public class Repose {
         return ReposeConfig.breakOnPartialBlocks &&
                 (!Repose.canDisplace(state) || // ex.: landing on a slab
                         Repose.canDisplace(world.getBlockState(pos.down())) || // ex.: landing on a ladder
-                        ((IBlockStateRepose) state).hasSolidTop(pos, world)); // ex. landing IN a ladder (falling instantly)
+                        hasSolidTop(state, pos, world)); // ex. landing IN a ladder (falling instantly)
     }
 
     /**
@@ -256,5 +258,12 @@ public class Repose {
                 posMut.release();
             }
         }
+    }
+
+    public static boolean hasSolidTop(IBlockState state, BlockPos pos, World world) {
+        AxisAlignedBB topBox = new AxisAlignedBB(0, 0.99, 0, 1, 1, 1).offset(pos);
+        ArrayList<AxisAlignedBB> intersectingBoxes = new ArrayList<>(1);
+        state.addCollisionBoxToList(world, pos, topBox, intersectingBoxes, null, false);
+        return !intersectingBoxes.isEmpty();
     }
 }
