@@ -19,7 +19,7 @@ package com.tommsy.repose.mixin.core;
 
 import javax.annotation.Nullable;
 
-import org.spongepowered.asm.lib.Opcodes;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
