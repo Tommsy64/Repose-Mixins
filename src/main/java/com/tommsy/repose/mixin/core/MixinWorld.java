@@ -20,11 +20,11 @@ package com.tommsy.repose.mixin.core;
 import java.util.Random;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.tommsy.repose.IBlockStateRepose;
+import com.tommsy.repose.ReposeWorld;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -32,15 +32,15 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 @Mixin(World.class)
-public class MixinWorld {
+public class MixinWorld implements ReposeWorld {
 
     @Redirect(method = "immediateBlockTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;updateTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V"))
     private void immediateBlockTick(Block block, World this$, BlockPos pos, IBlockState state_, Random random) {
         redirectUpdateTick(block, this$, pos, state_, random);
     }
 
-    @Unique
-    protected void redirectUpdateTick(Block block, World this$, BlockPos pos, IBlockState state_, Random random) {
+    // @Unique
+    public void redirectUpdateTick(Block block, World this$, BlockPos pos, IBlockState state_, Random random) {
         IBlockStateRepose state = (IBlockStateRepose) state_;
         if (state.canFallFrom(pos, this$))
             state.fallFrom(pos, pos, this$);

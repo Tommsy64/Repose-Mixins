@@ -17,8 +17,6 @@
  */
 package com.tommsy.repose.mixin.core;
 
-import java.util.Random;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,35 +24,16 @@ import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
 
+import com.tommsy.repose.DummyBlock;
+
 import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
 @Mixin(value = WorldServer.class, priority = 1010)
 public class MixinWorldServer extends MixinWorld {
-
-    /**
-     * This is done to maintain Sponge compatibility.
-     */
-    private final class DummyBlock extends Block {
-        private Block actualBlock;
-
-        public DummyBlock() {
-            super(Material.AIR, null);
-        }
-
-        @Override
-        public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) {
-            MixinWorldServer.this.redirectUpdateTick(actualBlock, world, pos, state, rand);
-            actualBlock = null;
-        }
-    }
-
     @Unique
-    private final DummyBlock dummyBlock = new DummyBlock();
+    private final DummyBlock dummyBlock = new DummyBlock(this);
 
     @Redirect(method = "updateBlockTick", slice = @Slice(from = @At(value = "INVOKE:LAST", target = "Lnet/minecraft/block/Block;updateTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V", shift = Shift.BY, by = -6)), at = @At(value = "INVOKE", target = "Lnet/minecraft/block/state/IBlockState;getBlock()Lnet/minecraft/block/Block;"), allow = 1)
     private Block returnDummyBlockUpdateBlockTick(IBlockState state) {
